@@ -1,0 +1,6 @@
+{
+  "cytotoxicity": ["NKG7", "PRF1", "GZMB", "GNLY"],
+  "interferon_response": ["IFIT1", "IFIT2", "ISG15", "MX1"],
+  "t_cell_naive": ["LTB", "IL7R", "MALAT1", "LTB"],
+  "cell_cycle": ["MKI67", "TOP2A", "STMN1", "PCNA"]
+}
