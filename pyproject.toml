@@ -13,12 +13,24 @@ authors = [
 ]
 dependencies = [
   "anndata",
-  "scanpy",
   "pandas",
   "numpy",
   "scipy",
   "scikit-learn",
   "pyyaml"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
+testpaths = [
+  "tests"
 ]
 
 [tool.setuptools.packages.find]

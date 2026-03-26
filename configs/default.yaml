@@ -1,0 +1,18 @@
+preprocessing:
+  min_genes: 1
+  min_cells: 1
+  target_sum: 10000
+
+pipeline:
+  methods:
+    - mean_score
+    - rank_score
+    - zscore_mean
+  qc_columns:
+    - n_counts
+    - n_genes
+    - sparsity
+  min_gene_set_overlap: 1
+
+output:
+  save_filtered_gene_sets: true
