@@ -112,6 +112,22 @@ def test_run_pipeline_returns_expected_outputs(toy_adata, toy_gene_sets):
         assert set(qc_df["qc_metric"]) == {"n_counts", "n_genes", "sparsity"}
 
 
+def test_run_pipeline_uses_default_qc_columns(toy_adata, toy_gene_sets):
+    adata = run_basic_preprocessing(toy_adata, min_genes=1, min_cells=1)
+
+    outputs = run_pipeline(
+        adata=adata,
+        gene_sets=toy_gene_sets,
+        methods=["mean_score"],
+    )
+
+    assert set(outputs["qc"]["mean_score"]["qc_metric"]) == {
+        "n_counts",
+        "n_genes",
+        "sparsity",
+    }
+
+
 def test_run_pipeline_requires_qc_columns(toy_adata, toy_gene_sets):
     with pytest.raises(ValueError, match="Missing QC column"):
         run_pipeline(

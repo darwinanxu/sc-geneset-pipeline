@@ -12,7 +12,7 @@ def run_pipeline(
     adata,
     gene_sets: dict[str, list[str]],
     methods: Iterable[str],
-    qc_columns: Iterable[str] = ("n_counts", "n_genes"),
+    qc_columns: Iterable[str] = ("n_counts", "n_genes", "sparsity"),
     min_gene_set_overlap: int = 1,
 ):
     methods = list(methods)
