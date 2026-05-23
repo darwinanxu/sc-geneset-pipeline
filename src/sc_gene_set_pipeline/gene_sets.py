@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List
 
@@ -84,6 +85,75 @@ def filter_gene_sets_to_var_names(
             filtered[set_name] = kept_genes
 
     return filtered
+
+
+def _unique_preserving_order(values: list[str]) -> list[str]:
+    seen = set()
+    unique_values = []
+    for value in values:
+        if value not in seen:
+            unique_values.append(value)
+            seen.add(value)
+    return unique_values
+
+
+def diagnose_gene_sets(
+    gene_sets: GeneSets,
+    var_names,
+    min_overlap: int = 1,
+) -> List[dict]:
+    """
+    Return detailed diagnostics for each gene set.
+
+    The diagnostics include matched genes, missing genes, duplicate genes, and
+    whether a gene set passes the requested minimum dataset overlap.
+    """
+    var_name_set = set(map(str, var_names))
+    diagnostics = []
+
+    for set_name, genes in gene_sets.items():
+        unique_genes = _unique_preserving_order(genes)
+        gene_counts = Counter(genes)
+        duplicate_genes = sorted(gene for gene, count in gene_counts.items() if count > 1)
+        matched_genes = [gene for gene in unique_genes if gene in var_name_set]
+        missing_genes = [gene for gene in unique_genes if gene not in var_name_set]
+
+        diagnostics.append(
+            {
+                "gene_set": set_name,
+                "n_genes_input": len(genes),
+                "n_unique_genes_input": len(unique_genes),
+                "n_duplicate_genes": len(duplicate_genes),
+                "n_genes_matched": len(matched_genes),
+                "n_genes_missing": len(missing_genes),
+                "match_fraction": len(matched_genes) / len(unique_genes) if unique_genes else 0.0,
+                "passes_min_overlap": len(matched_genes) >= min_overlap,
+                "matched_genes": ";".join(matched_genes),
+                "missing_genes": ";".join(missing_genes),
+                "duplicate_genes": ";".join(duplicate_genes),
+            }
+        )
+
+    return diagnostics
+
+
+def gene_set_diagnostics_frame(
+    gene_sets: GeneSets,
+    var_names,
+    min_overlap: int = 1,
+):
+    """
+    Return detailed gene set diagnostics as a DataFrame.
+    """
+    import pandas as pd
+
+    return pd.DataFrame(
+        diagnose_gene_sets(
+            gene_sets,
+            var_names,
+            min_overlap=min_overlap,
+        )
+    )
 
 
 def summarize_gene_set_overlap(gene_sets: GeneSets, var_names) -> List[dict]:

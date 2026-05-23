@@ -59,6 +59,8 @@ def main():
 
     save_dataframe(outputs["summary"], outdir / "tables" / "method_summary.csv")
     save_dataframe(outputs["gene_set_overlap"], outdir / "tables" / "gene_set_overlap.csv")
+    save_dataframe(outputs["gene_set_diagnostics"], outdir / "tables" / "gene_set_diagnostics.csv")
+    save_dataframe(outputs["combined_scores"], outdir / "tables" / "combined_scores.csv")
 
     for method, df in outputs["scores"].items():
         save_dataframe(df, outdir / "tables" / f"{method}_scores.csv")

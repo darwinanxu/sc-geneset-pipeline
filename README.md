@@ -126,9 +126,11 @@ The CLI creates `figures/`, `tables/`, and `logs/` under the output directory an
 
 Expected outputs:
 - `method_summary.csv`: one row per scoring method, including runtime and mean absolute QC correlation
+- `combined_scores.csv`: long-form score table with `method`, `cell_id`, `gene_set`, and `score`
 - `{method}_scores.csv`: per-cell gene set score matrix for each method
 - `{method}_qc_correlations.csv`: Spearman correlations between scores and QC metrics
 - `gene_set_overlap.csv`: overlap between input gene sets and dataset genes
+- `gene_set_diagnostics.csv`: detailed gene set diagnostics, including matched genes, missing genes, duplicate genes, and whether each set passes the minimum overlap threshold
 - `filtered_gene_sets.json`: gene sets retained after filtering to dataset genes
 
 ## Library Usage
@@ -152,9 +154,11 @@ outputs = run_pipeline(
 
 Returned keys:
 - `scores`
+- `combined_scores`
 - `qc`
 - `summary`
 - `gene_set_overlap`
+- `gene_set_diagnostics`
 - `filtered_gene_sets`
 
 ## Project Layout

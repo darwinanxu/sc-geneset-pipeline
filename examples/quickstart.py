@@ -44,10 +44,10 @@ def main():
 
     print("Summary")
     print(outputs["summary"])
-    print("\nGene set overlap")
-    print(outputs["gene_set_overlap"])
-    print("\nScore table preview")
-    print(outputs["scores"]["mean_score"].head())
+    print("\nGene set diagnostics")
+    print(outputs["gene_set_diagnostics"])
+    print("\nCombined score table preview")
+    print(outputs["combined_scores"].head())
 
 
 if __name__ == "__main__":

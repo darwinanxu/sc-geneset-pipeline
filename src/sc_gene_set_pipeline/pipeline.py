@@ -2,10 +2,38 @@ from typing import Iterable
 
 import pandas as pd
 
-from .gene_sets import filter_gene_sets_to_var_names, gene_set_overlap_frame
+from .gene_sets import (
+    filter_gene_sets_to_var_names,
+    gene_set_diagnostics_frame,
+    gene_set_overlap_frame,
+)
 from .scoring.registry import get_scorer
 from .evaluation.confounding import score_qc_correlations
 from .evaluation.summary import summarize_method_performance
+
+
+def combine_score_matrices(score_matrices: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Combine per-method score matrices into one long-form table.
+    """
+    frames = []
+    for method, score_df in score_matrices.items():
+        long_df = (
+            score_df.rename_axis("cell_id")
+            .reset_index()
+            .melt(
+                id_vars="cell_id",
+                var_name="gene_set",
+                value_name="score",
+            )
+        )
+        long_df.insert(0, "method", method)
+        frames.append(long_df)
+
+    if not frames:
+        return pd.DataFrame(columns=["method", "cell_id", "gene_set", "score"])
+
+    return pd.concat(frames, axis=0, ignore_index=True)
 
 
 def run_pipeline(
@@ -20,6 +48,11 @@ def run_pipeline(
         raise ValueError("At least one scoring method must be provided.")
 
     overlap_summary = gene_set_overlap_frame(gene_sets, adata.var_names)
+    gene_set_diagnostics = gene_set_diagnostics_frame(
+        gene_sets,
+        adata.var_names,
+        min_overlap=min_gene_set_overlap,
+    )
     filtered_gene_sets = filter_gene_sets_to_var_names(
         gene_sets,
         adata.var_names,
@@ -63,10 +96,13 @@ def run_pipeline(
         all_summaries.append(summary_df)
 
     summary = pd.concat(all_summaries, axis=0, ignore_index=True)
+    combined_scores = combine_score_matrices(all_scores)
     return {
         "scores": all_scores,
+        "combined_scores": combined_scores,
         "qc": all_qc,
         "summary": summary,
         "gene_set_overlap": overlap_summary,
+        "gene_set_diagnostics": gene_set_diagnostics,
         "filtered_gene_sets": filtered_gene_sets,
     }

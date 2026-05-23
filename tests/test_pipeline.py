@@ -8,10 +8,11 @@ from anndata import AnnData
 from sc_gene_set_pipeline.config import default_config, load_config
 from sc_gene_set_pipeline.gene_sets import (
     filter_gene_sets_to_var_names,
+    gene_set_diagnostics_frame,
     gene_set_overlap_frame,
     load_gene_sets,
 )
-from sc_gene_set_pipeline.pipeline import run_pipeline
+from sc_gene_set_pipeline.pipeline import combine_score_matrices, run_pipeline
 from sc_gene_set_pipeline.preprocessing import run_basic_preprocessing
 from sc_gene_set_pipeline.scoring.registry import SCORER_REGISTRY, get_scorer
 
@@ -70,6 +71,58 @@ def test_gene_set_overlap_frame_reports_matches(toy_adata, toy_gene_sets):
     assert missing_row["n_genes_matched"] == 0
 
 
+def test_gene_set_diagnostics_reports_missing_and_duplicates(toy_adata):
+    gene_sets = {
+        "mixed": ["NKG7", "NKG7", "PRF1", "DOES_NOT_EXIST"],
+        "too_small": ["DOES_NOT_EXIST"],
+    }
+
+    diagnostics = gene_set_diagnostics_frame(
+        gene_sets,
+        toy_adata.var_names,
+        min_overlap=2,
+    )
+
+    mixed_row = diagnostics.loc[diagnostics["gene_set"] == "mixed"].iloc[0]
+    assert mixed_row["n_genes_input"] == 4
+    assert mixed_row["n_unique_genes_input"] == 3
+    assert mixed_row["n_duplicate_genes"] == 1
+    assert mixed_row["n_genes_matched"] == 2
+    assert mixed_row["n_genes_missing"] == 1
+    assert bool(mixed_row["passes_min_overlap"])
+    assert mixed_row["matched_genes"] == "NKG7;PRF1"
+    assert mixed_row["missing_genes"] == "DOES_NOT_EXIST"
+    assert mixed_row["duplicate_genes"] == "NKG7"
+
+    too_small_row = diagnostics.loc[diagnostics["gene_set"] == "too_small"].iloc[0]
+    assert not bool(too_small_row["passes_min_overlap"])
+
+
+def test_combine_score_matrices_returns_long_form_table():
+    scores = {
+        "method_a": pd.DataFrame(
+            {"set_1": [1.0, 2.0], "set_2": [3.0, 4.0]},
+            index=["cell_1", "cell_2"],
+        ),
+        "method_b": pd.DataFrame(
+            {"set_1": [5.0, 6.0]},
+            index=["cell_1", "cell_2"],
+        ),
+    }
+
+    combined = combine_score_matrices(scores)
+
+    assert list(combined.columns) == ["method", "cell_id", "gene_set", "score"]
+    assert combined.shape == (6, 4)
+    first_row = combined.iloc[0]
+    assert first_row.to_dict() == {
+        "method": "method_a",
+        "cell_id": "cell_1",
+        "gene_set": "set_1",
+        "score": 1.0,
+    }
+
+
 @pytest.mark.parametrize("method_name", sorted(SCORER_REGISTRY))
 def test_each_scorer_returns_expected_shape(toy_adata, toy_gene_sets, method_name):
     adata = run_basic_preprocessing(toy_adata, min_genes=1, min_cells=1)
@@ -95,14 +148,24 @@ def test_run_pipeline_returns_expected_outputs(toy_adata, toy_gene_sets):
 
     assert set(outputs) == {
         "scores",
+        "combined_scores",
         "qc",
         "summary",
         "gene_set_overlap",
+        "gene_set_diagnostics",
         "filtered_gene_sets",
     }
     assert outputs["summary"].shape[0] == 3
     assert "mean_abs_qc_corr" in outputs["summary"].columns
     assert outputs["gene_set_overlap"].shape[0] == 4
+    assert outputs["gene_set_diagnostics"].shape[0] == 4
+    assert set(outputs["combined_scores"].columns) == {
+        "method",
+        "cell_id",
+        "gene_set",
+        "score",
+    }
+    assert outputs["combined_scores"].shape[0] == adata.n_obs * 3 * 3
     assert set(outputs["filtered_gene_sets"]) == {
         "cytotoxicity",
         "interferon_response",
