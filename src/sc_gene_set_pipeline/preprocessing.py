@@ -109,6 +109,6 @@ def run_basic_preprocessing(
     Convenience wrapper for the default preprocessing steps.
     """
     adata = basic_qc_filter(adata, min_genes=min_genes, min_cells=min_cells)
-    adata = normalize_log1p(adata, target_sum=target_sum)
     adata = add_basic_qc_metrics(adata)
+    adata = normalize_log1p(adata, target_sum=target_sum)
     return adata

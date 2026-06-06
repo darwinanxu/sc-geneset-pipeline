@@ -15,7 +15,7 @@ from sc_gene_set_pipeline.io import (
     save_json,
 )
 from sc_gene_set_pipeline.gene_sets import load_gene_sets
-from sc_gene_set_pipeline.preprocessing import basic_qc_filter, normalize_log1p, add_basic_qc_metrics
+from sc_gene_set_pipeline.preprocessing import run_basic_preprocessing
 from sc_gene_set_pipeline.pipeline import run_pipeline
 
 
@@ -37,13 +37,12 @@ def main():
     ensure_results_dirs(args.outdir)
 
     adata = load_anndata(args.data)
-    adata = basic_qc_filter(
+    adata = run_basic_preprocessing(
         adata,
         min_genes=config.preprocessing.min_genes,
         min_cells=config.preprocessing.min_cells,
+        target_sum=config.preprocessing.target_sum,
     )
-    adata = normalize_log1p(adata, target_sum=config.preprocessing.target_sum)
-    adata = add_basic_qc_metrics(adata)
 
     gene_sets = load_gene_sets(args.gene_sets)
 

@@ -224,6 +224,15 @@ def test_run_pipeline_requires_at_least_one_method(toy_adata, toy_gene_sets):
         )
 
 
+def test_run_basic_preprocessing_keeps_qc_metrics_on_raw_counts(toy_adata):
+    raw_counts_per_cell = np.asarray(toy_adata.X.sum(axis=1)).ravel()
+
+    adata = run_basic_preprocessing(toy_adata, min_genes=1, min_cells=1)
+
+    np.testing.assert_allclose(adata.obs["n_counts"].to_numpy(), raw_counts_per_cell)
+    assert not np.allclose(np.asarray(adata.X.sum(axis=1)).ravel(), raw_counts_per_cell)
+
+
 def test_basic_qc_filter_raises_when_no_cells_remain(toy_adata):
     with pytest.raises(ValueError, match="No cells remain after filtering"):
         run_basic_preprocessing(toy_adata, min_genes=100, min_cells=1)

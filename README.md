@@ -52,6 +52,8 @@ The pipeline will add these QC columns to `adata.obs` during preprocessing:
 - `n_genes`
 - `sparsity`
 
+These QC metrics are computed after filtering but before normalization/log transformation, so `n_counts` reflects the count-like input scale.
+
 ### Gene Sets
 
 Gene sets are loaded from JSON with this structure:
